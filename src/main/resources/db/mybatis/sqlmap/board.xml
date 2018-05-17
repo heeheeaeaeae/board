@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="board">
+
+
+
+	<!-- 게시판 리스트 -->
+	<select id="getBoardPanList" resultType="BoardPanVO">
+		select *
+		from boardpan
+	</select>
+
+
+	<!-- 게시글 페이지 list 조회 -->
+	<select id="getBoardPageList" resultType="BoardVO"
+		parameterType="map">
+		select *
+		from(
+		select board_seq,lpad(' ', (level-1)*4) || title title,mem_id, reg_dt ,rownum rn
+		from BOARD
+		start with pboard_seq is null and bp_Seq =#{bp_seq}
+		connect by prior board_seq = pboard_seq and bp_Seq =#{bp_seq}
+		order siblings by group_Seq desc)
+		WHERE rn BETWEEN (#{page}-1) * #{pageSize}+1 AND
+		#{page}*#{pageSize}
+	</select>
+	
+	<!-- 전체 게시글 개수 조회 -->
+	<select id = "getBoardCount" resultType="integer" >
+		SELECT count(*)
+		FROM board
+	</select>
+	
+	<!-- 게시판 추가 -->
+	<insert id="addBoardPan"  parameterType="BoardPanVO">
+		insert into boardpan 
+        values(bp_seq.NEXTVAL,#{mem_id},#{bp_name},#{del_yn},sysdate)
+	</insert>
+	
+	<!-- 게시글 추가 -->
+	<insert id ="addBoard" parameterType="BoardVO">
+	<selectKey keyProperty="board_seq" resultType="int" order="BEFORE">
+	 select board_seq.NEXTVAL from dual
+	</selectKey>
+		INSERT INTO BOARD VALUES(#{board_seq},#{pboard_seq,jdbcType=INTEGER},#{bp_seq},#{board_seq},
+		#{title} ,
+		#{content},
+		#{del_yn} ,
+		#{mem_id},sysdate)
+	</insert>
+	
+
+</mapper>
